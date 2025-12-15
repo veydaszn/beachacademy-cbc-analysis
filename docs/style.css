@@ -1,3 +1,4 @@
+
 * {
   box-sizing: border-box;
 }
@@ -84,4 +85,9 @@ th {
 
 tr:nth-child(even) {
   background: #fafafa;
+}
+
+/* Ensure the chart canvas has a usable height so Chart.js can render properly */
+#subjectChart {
+  height: 300px;
 }
