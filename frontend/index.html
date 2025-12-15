@@ -1,38 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>CBC Learner Performance Analysis</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CBC Performance Dashboard</title>
+  <link rel="stylesheet" href="style.css"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-  <header>
-    <h1>CBC Learner Performance Analysis</h1>
-    <p>Data-driven learner performance visualization</p>
-  </header>
+<header>
+  <h1>CBC Learner Performance Dashboard</h1>
+  <p>Interactive CBC analysis and visualization</p>
+</header>
 
-  <section>
-    <h2>Learner Performance Table</h2>
-    <table id="performance-table">
-      <thead>
-        <tr>
-          <th>Learner</th>
-          <th>EE</th>
-          <th>ME</th>
-          <th>AE</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </section>
+<section class="controls">
+  <label for="learnerSelect">Select Learner:</label>
+  <select id="learnerSelect"></select>
+</section>
 
-  <section>
-    <h2>Performance Distribution</h2>
-    <canvas id="barChart"></canvas>
-  </section>
+<section class="grid">
+  <div class="card">
+    <h3>Subject Performance</h3>
+    <canvas id="subjectChart"></canvas>
+  </div>
 
-  <script src="script.js"></script>
+  <div class="card">
+    <h3>Performance Summary</h3>
+    <ul id="summary"></ul>
+  </div>
+</section>
+
+<script src="script.js"></script>
 </body>
 </html>
