@@ -1,4 +1,9 @@
-let detailedLearners = []; // Changed 'learners' to 'detailedLearners' for clarity
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  // ALL your JS code here
+
+  let detailedLearners = []; // Changed 'learners' to 'detailedLearners' for clarity
 let chart;
 
 // --- 1. FETCH AND LOAD DATA FIX ---
@@ -131,4 +136,7 @@ function exportPDF() {
     pdf.save(`${currentLearnerName}_CBC_Report.pdf`);
   });
 }
+
+ 
+});
 
