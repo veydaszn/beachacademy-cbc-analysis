@@ -72,3 +72,22 @@ function updateSummary(subjects) {
     ul.appendChild(li);
   });
 }
+
+
+document.getElementById("exportBtn").addEventListener("click", exportPDF);
+
+function exportPDF() {
+  const report = document.getElementById("report");
+
+  html2canvas(report, { scale: 2 }).then(canvas => {
+    const imgData = canvas.toDataURL("image/png");
+    const { jsPDF } = window.jspdf;
+
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+    pdf.addImage(imgData, "PNG", 0, 10, pdfWidth, pdfHeight);
+    pdf.save("CBC_Learner_Report.pdf");
+  });
+}
