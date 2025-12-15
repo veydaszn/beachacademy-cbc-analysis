@@ -1,0 +1,86 @@
+[
+  {
+    "learner": "Aquillah Wanjiru Wangare",
+    "subjects": {
+      "English": "EE1",
+      "Kiswahili": "EE1",
+      "Mathematics": "ME2",
+      "Integrated Science": "EE2",
+      "Agriculture": "EE1",
+      "Social Studies": "EE2",
+      "CRE": "EE2",
+      "Creative Arts": "EE1",
+      "Pre-Technical": "EE2"
+    }
+  },
+  {
+    "learner": "Kamau Joy Muthoni",
+    "subjects": {
+      "English": "EE1",
+      "Kiswahili": "EE2",
+      "Mathematics": "EE1",
+      "Integrated Science": "EE2",
+      "Agriculture": "EE1",
+      "Social Studies": "EE2",
+      "CRE": "EE2",
+      "Creative Arts": "EE2",
+      "Pre-Technical": "EE2"
+    }
+  },
+  {
+    "learner": "Victoria Wanjiku Gaikia",
+    "subjects": {
+      "English": "ME1",
+      "Kiswahili": "ME1",
+      "Mathematics": "ME2",
+      "Integrated Science": "ME2",
+      "Agriculture": "EE2",
+      "Social Studies": "EE2",
+      "CRE": "ME2",
+      "Creative Arts": "EE2",
+      "Pre-Technical": "ME1"
+    }
+  },
+  {
+    "learner": "Tevin Wambugu",
+    "subjects": {
+      "English": "ME1",
+      "Kiswahili": "ME2",
+      "Mathematics": "ME1",
+      "Integrated Science": "ME1",
+      "Agriculture": "EE2",
+      "Social Studies": "EE2",
+      "CRE": "EE2",
+      "Creative Arts": "ME1",
+      "Pre-Technical": "ME1"
+    }
+  },
+  {
+    "learner": "Miles Mwangi",
+    "subjects": {
+      "English": "ME2",
+      "Kiswahili": "ME2",
+      "Mathematics": "AE1",
+      "Integrated Science": "AE1",
+      "Agriculture": "ME1",
+      "Social Studies": "ME1",
+      "CRE": "ME2",
+      "Creative Arts": "ME2",
+      "Pre-Technical": "ME2"
+    }
+  },
+  {
+    "learner": "Finian Ancile Kamau",
+    "subjects": {
+      "English": "ME2",
+      "Kiswahili": "ME2",
+      "Mathematics": "AE1",
+      "Integrated Science": "AE1",
+      "Agriculture": "ME1",
+      "Social Studies": "ME1",
+      "CRE": "AE1",
+      "Creative Arts": "ME2",
+      "Pre-Technical": "ME2"
+    }
+  }
+]
