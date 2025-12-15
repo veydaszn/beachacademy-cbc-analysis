@@ -111,4 +111,41 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function populateClassTable() {
+  const tbody = document.querySelector("#classTable tbody");
+  tbody.innerHTML = "";
+
+  detailedLearners.forEach(l => {
+    const grades = Object.values(l.subjects).map(gradeToNumber);
+    const avg = (grades.reduce((a, b) => a + b, 0) / grades.length).toFixed(2);
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${l.learner}</td>
+      <td>${Object.keys(l.subjects).length}</td>
+      <td>${avg}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  }
+  populateClassTable();
+
+document.getElementById("exportClassBtn").addEventListener("click", () => {
+  const table = document.querySelector(".table-wrapper");
+
+  html2canvas(table, { scale: 2 }).then(canvas => {
+    const img = canvas.toDataURL("image/png");
+    const { jsPDF } = window.jspdf;
+
+    const pdf = new jsPDF("p", "mm", "a4");
+    const width = pdf.internal.pageSize.getWidth();
+    const height = (canvas.height * width) / canvas.width;
+
+    pdf.text("CBC Class Results Summary", 10, 10);
+    pdf.addImage(img, "PNG", 0, 15, width, height);
+    pdf.save("CBC_Class_Results.pdf");
+  });
+});
+        
+  
 });
