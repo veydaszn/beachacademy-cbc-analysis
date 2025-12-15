@@ -31,6 +31,26 @@
   </div>
 </section>
 
+<section id="report">
+  <section class="controls">
+    <label for="learnerSelect">Select Learner:</label>
+    <select id="learnerSelect"></select>
+    <button id="exportBtn">Export PDF</button>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <h3>Subject Performance</h3>
+      <canvas id="subjectChart"></canvas>
+    </div>
+
+    <div class="card">
+      <h3>Performance Summary</h3>
+      <ul id="summary"></ul>
+    </div>
+  </section>
+</section>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
