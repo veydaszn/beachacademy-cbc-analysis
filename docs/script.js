@@ -91,3 +91,7 @@ function exportPDF() {
     pdf.save("CBC_Learner_Report.pdf");
   });
 }
+
+pdf.text(`Learner: ${currentLearnerName}`, 10, 10);
+
+pdf.save(`${currentLearnerName}_CBC_Report.pdf`);
