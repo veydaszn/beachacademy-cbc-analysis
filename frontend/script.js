@@ -1,41 +1,74 @@
+let learners = [];
+let chart;
 
 fetch("data.json")
   .then(res => res.json())
   .then(data => {
-    populateTable(data);
-    drawChart(data);
+    learners = data;
+    populateDropdown();
+    updateDashboard(data[0]);
   });
 
-function populateTable(data) {
-  const tbody = document.querySelector("#performance-table tbody");
+function populateDropdown() {
+  const select = document.getElementById("learnerSelect");
+  learners.forEach((l, i) => {
+    const option = document.createElement("option");
+    option.value = i;
+    option.textContent = l.learner;
+    select.appendChild(option);
+  });
 
-  data.forEach(row => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${row.Learner}</td>
-      <td>${row.EE}</td>
-      <td>${row.ME}</td>
-      <td>${row.AE}</td>
-    `;
-    tbody.appendChild(tr);
+  select.addEventListener("change", e => {
+    updateDashboard(learners[e.target.value]);
   });
 }
 
-function drawChart(data) {
-  const labels = data.map(d => d.Learner);
-  const ee = data.map(d => d.EE);
-  const me = data.map(d => d.ME);
-  const ae = data.map(d => d.AE);
+function updateDashboard(learner) {
+  const subjects = Object.keys(learner.subjects);
+  const values = subjects.map(s => gradeToNumber(learner.subjects[s]));
 
-  new Chart(document.getElementById("barChart"), {
+  updateChart(subjects, values);
+  updateSummary(learner.subjects);
+}
+
+function gradeToNumber(grade) {
+  return {
+    EE1: 5,
+    EE2: 4.5,
+    ME1: 4,
+    ME2: 3.5,
+    AE1: 3
+  }[grade] || 0;
+}
+
+function updateChart(labels, data) {
+  if (chart) chart.destroy();
+
+  chart = new Chart(document.getElementById("subjectChart"), {
     type: "bar",
     data: {
       labels,
-      datasets: [
-        { label: "EE", data: ee },
-        { label: "ME", data: me },
-        { label: "AE", data: ae }
-      ]
+      datasets: [{
+        label: "Performance Score",
+        data
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true, max: 5 }
+      }
     }
   });
 }
+
+function updateSummary(subjects) {
+  const ul = document.getElementById("summary");
+  ul.innerHTML = "";
+
+  Object.entries(subjects).forEach(([sub, grade]) => {
+    const li = document.createElement("li");
+    li.textContent = `${sub}: ${grade}`;
+    ul.appendChild(li);
+  });
+        }
