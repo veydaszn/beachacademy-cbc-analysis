@@ -1,31 +1,145 @@
 
+// Global variables
+let detailedLearners = [];
+let summaryLearners = [];
+let chart;
+const MAX_TOTAL_SCORE = 72; // 8 points * 9 subjects
+
+// --- Helper Function: Grade to Number Conversion (8-Point System) ---
+function gradeToNumber(grade) {
+  // Implements the 8-point score map (EE1=8, BE2=1)
+  const scoreMap = {
+    'EE1': 8,
+    'EE2': 7,
+    'ME1': 6,
+    'ME2': 5,
+    'AE1': 4,
+    'AE2': 3, // Included for completeness, though not in current data
+    'BE1': 2, // Included for completeness
+    'BE2': 1  // Included for completeness
+  };
+  
+  // Returns the score or 0 if the grade is unknown
+  return scoreMap[grade] || 0; 
+}
+
+// --- INITIAL DATA FETCH AND SETUP ---
+// Use an explicit relative path to avoid ambiguous resolution when
+// serving from different contexts (file:// vs http://)
+fetch("./data.json")
+  .then(res => {
+    if (!res.ok) {
+        throw new Error(`HTTP error! Status: ${res.status}.`);
+    }
+    return res.json();
+  })
+  .then(data => {
+    detailedLearners = data.detailed_performance; 
+    summaryLearners = data.performance_summary; 
+    
+    if (detailedLearners && detailedLearners.length > 0) {
+        populateDropdown();
+        // Populate the Class Results table
+        populateClassTable(detailedLearners); 
+        // Populate the Subject Performance Tally
+        populateTallyTable(detailedLearners); 
+        
+        // Start the dashboard with the first learner's data
+        updateDashboard(detailedLearners[0]);
+    } else {
+        console.error("Data loaded, but 'detailed_performance' array is empty or missing.");
+    }
+  })
+  .catch(error => {
+    console.error("DATA LOADING FAILED:", error.message);
+    const select = document.getElementById('learnerSelect');
+    if (select) select.innerHTML = '<option disabled selected>Error loading data</option>';
+
+    // Provide a visible error message in the UI so users know why no data appears
+    const report = document.getElementById('report');
+    if (report) {
+      report.innerHTML = `
+        <div style="padding:20px;background:#fee;border:1px solid #f99;border-radius:6px;">
+          <strong>Error loading data:</strong> ${error.message}.
+          <div style="margin-top:8px;">If you opened the HTML file directly, serve the folder with a local server (for example: <code>python3 -m http.server</code>) and reload.</div>
+        </div>`;
+    }
+  });
+
+
+// --- POPULATE DROPDOWN (Fixes the Empty Dropdown Issue) ---
+function populateDropdown() {
+  const select = document.getElementById("learnerSelect");
+  select.innerHTML = ''; 
+
+  // Add default option
+  const defaultOption = document.createElement("option");
+  defaultOption.textContent = "Select Learner:";
+  defaultOption.value = "";
+  defaultOption.disabled = true;
+  defaultOption.selected = true;
+  select.appendChild(defaultOption);
+
+  detailedLearners.forEach((l, i) => {
+    const option = document.createElement("option");
+    option.value = i; 
+    option.textContent = l.learner;
+    select.appendChild(option);
+  });
+
+  select.addEventListener("change", e => {
+    const index = parseInt(e.target.value);
+    updateDashboard(detailedLearners[index]); 
+  });
+}
+
 // --- POPULATE CLASS RESULTS TABLE (Fixes Class Results Not Showing & Implements 72 Max Score) ---
 function populateClassTable(learners) {
+    const thead = document.getElementById("classTableHead");
     const tbody = document.getElementById("classTable").querySelector("tbody");
+    thead.innerHTML = '';
     tbody.innerHTML = '';
 
+    // Create header
+    const headerTr = document.createElement("tr");
+    headerTr.appendChild(document.createElement("th")).textContent = "Subject";
     learners.forEach(l => {
-        const subjects = l.subjects;
-        let totalScore = 0;
-        Object.keys(subjects).forEach(sub => {
-            const grade = subjects[sub];
-            const score = gradeToNumber(grade);
-            totalScore += score;
-            const tr = document.createElement("tr");
-            tr.innerHTML = `<td>${l.learner}</td><td>${sub}</td><td>${grade}</td><td>${score}</td>`;
-            tbody.appendChild(tr);
-        });
-        // Add total row
-        const trTotal = document.createElement("tr");
-        trTotal.innerHTML = `<td colspan="3"><strong>Total</strong></td><td><strong>${totalScore}</strong></td>`;
-        tbody.appendChild(trTotal);
+        const th = document.createElement("th");
+        th.textContent = l.learner;
+        headerTr.appendChild(th);
     });
+    thead.appendChild(headerTr);
+
+    // Get subjects
+    const subjects = Object.keys(learners[0].subjects);
+
+    // For each subject, create row
+    subjects.forEach(sub => {
+        const tr = document.createElement("tr");
+        tr.appendChild(document.createElement("td")).textContent = sub;
+        learners.forEach(l => {
+            const score = gradeToNumber(l.subjects[sub]);
+            tr.appendChild(document.createElement("td")).textContent = score;
+        });
+        tbody.appendChild(tr);
+    });
+
+    // Add total row
+    const totalTr = document.createElement("tr");
+    totalTr.appendChild(document.createElement("td")).textContent = "Total";
+    learners.forEach(l => {
+        const total = Object.values(l.subjects).reduce((sum, grade) => sum + gradeToNumber(grade), 0);
+        totalTr.appendChild(document.createElement("td")).textContent = total;
+    });
+    tbody.appendChild(totalTr);
 }
 
 
 // --- POPULATE SUBJECT PERFORMANCE TALLY ---
 function populateTallyTable(learners) {
+    const thead = document.getElementById("tallyTableHead");
     const tbody = document.getElementById("tallyTable").querySelector("tbody");
+    thead.innerHTML = '';
     tbody.innerHTML = '';
 
     const subjects = Object.keys(learners[0].subjects);
@@ -45,13 +159,24 @@ function populateTallyTable(learners) {
         });
     });
 
+    // Create header
+    const headerTr = document.createElement("tr");
+    headerTr.appendChild(document.createElement("th")).textContent = "Grade";
     subjects.forEach(sub => {
-        ['EE', 'ME', 'AE', 'BE'].forEach(grade => {
-            const count = tally[sub][grade];
-            const tr = document.createElement("tr");
-            tr.innerHTML = `<td>${sub}</td><td>${grade}</td><td>${count}</td>`;
-            tbody.appendChild(tr);
+        const th = document.createElement("th");
+        th.textContent = sub;
+        headerTr.appendChild(th);
+    });
+    thead.appendChild(headerTr);
+
+    // For each grade, create row
+    ['EE', 'ME', 'AE', 'BE'].forEach(grade => {
+        const tr = document.createElement("tr");
+        tr.appendChild(document.createElement("td")).textContent = grade;
+        subjects.forEach(sub => {
+            tr.appendChild(document.createElement("td")).textContent = tally[sub][grade];
         });
+        tbody.appendChild(tr);
     });
 }
 
@@ -193,4 +318,4 @@ if (exportClassBtn) {
       pdf.save("CBC_Class_Results.pdf");
     });
   });
-                    }
+        }
