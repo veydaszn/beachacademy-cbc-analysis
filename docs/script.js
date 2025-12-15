@@ -1,3 +1,4 @@
+
 // Global variables
 let detailedLearners = [];
 let summaryLearners = [];
@@ -23,10 +24,12 @@ function gradeToNumber(grade) {
 }
 
 // --- INITIAL DATA FETCH AND SETUP ---
-fetch("data.json")
+// Use an explicit relative path to avoid ambiguous resolution when
+// serving from different contexts (file:// vs http://)
+fetch("./data.json")
   .then(res => {
     if (!res.ok) {
-        throw new Error(`HTTP error! Status: ${res.status}. Check file path (../data.json).`);
+        throw new Error(`HTTP error! Status: ${res.status}.`);
     }
     return res.json();
   })
@@ -38,6 +41,8 @@ fetch("data.json")
         populateDropdown();
         // Populate the Class Results table
         populateClassTable(detailedLearners); 
+        // Populate the Subject Performance Tally
+        populateTallyTable(detailedLearners); 
         
         // Start the dashboard with the first learner's data
         updateDashboard(detailedLearners[0]);
@@ -47,7 +52,18 @@ fetch("data.json")
   })
   .catch(error => {
     console.error("DATA LOADING FAILED:", error.message);
-    document.getElementById('learnerSelect').innerHTML = '<option disabled selected>Error loading data</option>';
+    const select = document.getElementById('learnerSelect');
+    if (select) select.innerHTML = '<option disabled selected>Error loading data</option>';
+
+    // Provide a visible error message in the UI so users know why no data appears
+    const report = document.getElementById('report');
+    if (report) {
+      report.innerHTML = `
+        <div style="padding:20px;background:#fee;border:1px solid #f99;border-radius:6px;">
+          <strong>Error loading data:</strong> ${error.message}.
+          <div style="margin-top:8px;">If you opened the HTML file directly, serve the folder with a local server (for example: <code>python3 -m http.server</code>) and reload.</div>
+        </div>`;
+    }
   });
 
 
@@ -84,22 +100,52 @@ function populateClassTable(learners) {
 
     learners.forEach(l => {
         const subjects = l.subjects;
-        const subjectScores = Object.values(subjects).map(gradeToNumber);
-        
-        // Calculate the total score
-        const totalScore = subjectScores.reduce((sum, score) => sum + score, 0);
-        
-        // Calculate the percentage based on Max 72
-        const percentage = ((totalScore / MAX_TOTAL_SCORE) * 100).toFixed(1); 
+        let totalScore = 0;
+        Object.keys(subjects).forEach(sub => {
+            const grade = subjects[sub];
+            const score = gradeToNumber(grade);
+            totalScore += score;
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${l.learner}</td><td>${sub}</td><td>${grade}</td><td>${score}</td>`;
+            tbody.appendChild(tr);
+        });
+        // Add total row
+        const trTotal = document.createElement("tr");
+        trTotal.innerHTML = `<td colspan="3"><strong>Total</strong></td><td><strong>${totalScore}</strong></td>`;
+        tbody.appendChild(trTotal);
+    });
+}
 
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${l.learner}</td>
-            <td>${subjectScores.length}</td>
-            <td>${totalScore} / ${MAX_TOTAL_SCORE}</td>
-            <td>${percentage}%</td>
-        `;
-        tbody.appendChild(tr);
+
+// --- POPULATE SUBJECT PERFORMANCE TALLY ---
+function populateTallyTable(learners) {
+    const tbody = document.getElementById("tallyTable").querySelector("tbody");
+    tbody.innerHTML = '';
+
+    const subjects = Object.keys(learners[0].subjects);
+    const tally = {};
+
+    subjects.forEach(sub => {
+        tally[sub] = { EE: 0, ME: 0, AE: 0, BE: 0 };
+    });
+
+    learners.forEach(l => {
+        subjects.forEach(sub => {
+            const grade = l.subjects[sub];
+            const category = grade.substring(0, 2); // EE, ME, AE, BE
+            if (tally[sub][category] !== undefined) {
+                tally[sub][category]++;
+            }
+        });
+    });
+
+    subjects.forEach(sub => {
+        ['EE', 'ME', 'AE', 'BE'].forEach(grade => {
+            const count = tally[sub][grade];
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${sub}</td><td>${grade}</td><td>${count}</td>`;
+            tbody.appendChild(tr);
+        });
     });
 }
 
@@ -132,8 +178,11 @@ function updateChart(labels, data) {
       }]
     },
     options: {
-      responsive: true,
+      responsive: false,
       maintainAspectRatio: false, 
+      animation: {
+        duration: 0
+      },
       scales: {
         y: { beginAtZero: true, max: 8 } // Chart Y-axis max updated to 8
       },
@@ -238,5 +287,4 @@ if (exportClassBtn) {
       pdf.save("CBC_Class_Results.pdf");
     });
   });
-}
-
+                    }
