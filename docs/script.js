@@ -24,47 +24,47 @@ function gradeToNumber(grade) {
 }
 
 // --- INITIAL DATA FETCH AND SETUP ---
-// Use an explicit relative path to avoid ambiguous resolution when
-// serving from different contexts (file:// vs http://)
-fetch("./data.json")
-  .then(res => {
-    if (!res.ok) {
-        throw new Error(`HTTP error! Status: ${res.status}.`);
-    }
-    return res.json();
-  })
-  .then(data => {
-    detailedLearners = data.detailed_performance; 
-    summaryLearners = data.performance_summary; 
-    
-    if (detailedLearners && detailedLearners.length > 0) {
-        populateDropdown();
-        // Populate the Class Results table
-        populateClassTable(detailedLearners); 
-        // Populate the Subject Performance Tally
-        populateTallyTable(detailedLearners); 
-        
-        // Start the dashboard with the first learner's data
-        updateDashboard(detailedLearners[0]);
-    } else {
-        console.error("Data loaded, but 'detailed_performance' array is empty or missing.");
-    }
-  })
-  .catch(error => {
-    console.error("DATA LOADING FAILED:", error.message);
-    const select = document.getElementById('learnerSelect');
-    if (select) select.innerHTML = '<option disabled selected>Error loading data</option>';
+document.addEventListener('DOMContentLoaded', () => {
+  fetch("./data.json")
+    .then(res => {
+      if (!res.ok) {
+          throw new Error(`HTTP error! Status: ${res.status}.`);
+      }
+      return res.json();
+    })
+    .then(data => {
+      detailedLearners = data.detailed_performance; 
+      summaryLearners = data.performance_summary; 
+      
+      if (detailedLearners && detailedLearners.length > 0) {
+          populateDropdown();
+          // Populate the Class Results table
+          populateClassTable(detailedLearners); 
+          // Populate the Subject Performance Tally
+          populateTallyTable(detailedLearners); 
+          
+          // Start the dashboard with the first learner's data
+          updateDashboard(detailedLearners[0]);
+      } else {
+          console.error("Data loaded, but 'detailed_performance' array is empty or missing.");
+      }
+    })
+    .catch(error => {
+      console.error("DATA LOADING FAILED:", error.message);
+      const select = document.getElementById('learnerSelect');
+      if (select) select.innerHTML = '<option disabled selected>Error loading data</option>';
 
-    // Provide a visible error message in the UI so users know why no data appears
-    const report = document.getElementById('report');
-    if (report) {
-      report.innerHTML = `
-        <div style="padding:20px;background:#fee;border:1px solid #f99;border-radius:6px;">
-          <strong>Error loading data:</strong> ${error.message}.
-          <div style="margin-top:8px;">If you opened the HTML file directly, serve the folder with a local server (for example: <code>python3 -m http.server</code>) and reload.</div>
-        </div>`;
-    }
-  });
+      // Provide a visible error message in the UI so users know why no data appears
+      const report = document.getElementById('report');
+      if (report) {
+        report.innerHTML = `
+          <div style="padding:20px;background:#fee;border:1px solid #f99;border-radius:6px;">
+            <strong>Error loading data:</strong> ${error.message}.
+            <div style="margin-top:8px;">If you opened the HTML file directly, serve the folder with a local server (for example: <code>python3 -m http.server</code>) and reload.</div>
+          </div>`;
+      }
+    });
+});
 
 
 // --- POPULATE DROPDOWN (Fixes the Empty Dropdown Issue) ---
@@ -318,4 +318,4 @@ if (exportClassBtn) {
       pdf.save("CBC_Class_Results.pdf");
     });
   });
-        }
+      }
