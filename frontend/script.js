@@ -71,4 +71,4 @@ function updateSummary(subjects) {
     li.textContent = `${sub}: ${grade}`;
     ul.appendChild(li);
   });
-        }
+}
