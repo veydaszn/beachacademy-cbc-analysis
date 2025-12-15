@@ -41,9 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
           populateClassTable(detailedLearners); 
           // Populate the Subject Performance Tally
           populateTallyTable(detailedLearners); 
-          
-          // Start the dashboard with the first learner's data
-          updateDashboard(detailedLearners[0]);
       } else {
           console.error("Data loaded, but 'detailed_performance' array is empty or missing.");
       }
@@ -71,9 +68,16 @@ function populateDropdown() {
   const select = document.getElementById("learnerSelect");
   select.innerHTML = ''; 
 
+  // Sort learners by total score descending
+  detailedLearners.sort((a, b) => {
+    const totalA = Object.values(a.subjects).reduce((sum, grade) => sum + gradeToNumber(grade), 0);
+    const totalB = Object.values(b.subjects).reduce((sum, grade) => sum + gradeToNumber(grade), 0);
+    return totalB - totalA;
+  });
+
   // Add default option
   const defaultOption = document.createElement("option");
-  defaultOption.textContent = "Select Learner:";
+  defaultOption.textContent = "Select a learner to view analysis";
   defaultOption.value = "";
   defaultOption.disabled = true;
   defaultOption.selected = true;
@@ -88,7 +92,9 @@ function populateDropdown() {
 
   select.addEventListener("change", e => {
     const index = parseInt(e.target.value);
-    updateDashboard(detailedLearners[index]); 
+    updateDashboard(detailedLearners[index]);
+    // Show the analysis section
+    document.getElementById("analysisSection").style.display = "grid";
   });
 }
 
@@ -343,4 +349,4 @@ if (exportTallyBtn) {
       pdf.save("CBC_Subject_Tally.pdf");
     });
   });
-    }
+          }
