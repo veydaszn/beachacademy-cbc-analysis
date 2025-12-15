@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,14 +24,31 @@
         <thead>
           <tr>
             <th>Learner</th>
-            <th>Subjects</th>
-            <th>Total Score</th>
-            <th>Percentage</th> </tr>
+            <th>Subject</th>
+            <th>Grade</th>
+            <th>Score</th>
+          </tr>
         </thead>
         <tbody></tbody>
       </table>
     </div>
     <button id="exportClassBtn">Export Class PDF</button>
+  </section>
+  
+  <section class="card">
+    <h3>Subject Performance Tally</h3>
+    <div class="table-wrapper">
+      <table id="tallyTable">
+        <thead>
+          <tr>
+            <th>Subject</th>
+            <th>Grade</th>
+            <th>Number of Students</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </section>
   
   <section class="controls">
@@ -57,5 +75,4 @@
 
 <script src="script.js"></script>
 </body>
-</html>
-
+  </html>
