@@ -1,4 +1,3 @@
-
 // Global variables
 let detailedLearners = [];
 let summaryLearners = [];
@@ -143,18 +142,19 @@ function populateTallyTable(learners) {
     tbody.innerHTML = '';
 
     const subjects = Object.keys(learners[0].subjects);
+    const grades = ['EE1', 'EE2', 'ME1', 'ME2', 'AE1', 'AE2', 'BE1', 'BE2'];
     const tally = {};
 
     subjects.forEach(sub => {
-        tally[sub] = { EE: 0, ME: 0, AE: 0, BE: 0 };
+        tally[sub] = {};
+        grades.forEach(g => tally[sub][g] = 0);
     });
 
     learners.forEach(l => {
         subjects.forEach(sub => {
             const grade = l.subjects[sub];
-            const category = grade.substring(0, 2); // EE, ME, AE, BE
-            if (tally[sub][category] !== undefined) {
-                tally[sub][category]++;
+            if (tally[sub][grade] !== undefined) {
+                tally[sub][grade]++;
             }
         });
     });
@@ -170,7 +170,7 @@ function populateTallyTable(learners) {
     thead.appendChild(headerTr);
 
     // For each grade, create row
-    ['EE', 'ME', 'AE', 'BE'].forEach(grade => {
+    grades.forEach(grade => {
         const tr = document.createElement("tr");
         tr.appendChild(document.createElement("td")).textContent = grade;
         subjects.forEach(sub => {
@@ -318,4 +318,29 @@ if (exportClassBtn) {
       pdf.save("CBC_Class_Results.pdf");
     });
   });
-      }
+}
+
+// --- EXPORT TALLY PDF LOGIC ---
+
+const exportTallyBtn = document.getElementById("exportTallyBtn");
+
+if (exportTallyBtn) {
+  exportTallyBtn.addEventListener("click", () => {
+    const tallyWrapper = document.querySelectorAll(".table-wrapper")[1]; // Assuming the tally is the second table-wrapper
+
+    html2canvas(tallyWrapper, { scale: 2 }).then(canvas => {
+      const imgData = canvas.toDataURL("image/png");
+      const { jsPDF } = window.jspdf;
+
+      const pdf = new jsPDF("p", "mm", "a4");
+      const width = pdf.internal.pageSize.getWidth();
+      const height = (canvas.height * width) / canvas.width;
+
+      pdf.setFontSize(16);
+      pdf.text("CBC Subject Performance Tally", 10, 15);
+      pdf.addImage(imgData, "PNG", 0, 20, width, height);
+
+      pdf.save("CBC_Subject_Tally.pdf");
+    });
+  });
+    }
