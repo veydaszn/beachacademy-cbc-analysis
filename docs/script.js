@@ -1,147 +1,229 @@
-document.addEventListener("DOMContentLoaded", () => {
+// Global variables
+let detailedLearners = [];
+let summaryLearners = [];
+let chart;
+const MAX_TOTAL_SCORE = 72; // 8 points * 9 subjects
 
-  let detailedLearners = [];
-  let chart;
+// --- Helper Function: Grade to Number Conversion (8-Point System) ---
+function gradeToNumber(grade) {
+  // Implements the 8-point score map (EE1=8, BE2=1)
+  const scoreMap = {
+    'EE1': 8,
+    'EE2': 7,
+    'ME1': 6,
+    'ME2': 5,
+    'AE1': 4,
+    'AE2': 3, // Included for completeness, though not in current data
+    'BE1': 2, // Included for completeness
+    'BE2': 1  // Included for completeness
+  };
+  
+  // Returns the score or 0 if the grade is unknown
+  return scoreMap[grade] || 0; 
+}
 
-  /* =========================
-     LOAD & NORMALIZE DATA
-  ========================== */
-  fetch("data.json")
-    .then(res => {
-      if (!res.ok) throw new Error("Failed to load data.json");
-      return res.json();
-    })
-    .then(rawData => {
+// --- INITIAL DATA FETCH AND SETUP ---
+fetch("../data.json")
+  .then(res => {
+    if (!res.ok) {
+        throw new Error(`HTTP error! Status: ${res.status}. Check file path (../data.json).`);
+    }
+    return res.json();
+  })
+  .then(data => {
+    detailedLearners = data.detailed_performance; 
+    summaryLearners = data.performance_summary; 
+    
+    if (detailedLearners && detailedLearners.length > 0) {
+        populateDropdown();
+        // Populate the Class Results table
+        populateClassTable(detailedLearners); 
+        
+        // Start the dashboard with the first learner's data
+        updateDashboard(detailedLearners[0]);
+    } else {
+        console.error("Data loaded, but 'detailed_performance' array is empty or missing.");
+    }
+  })
+  .catch(error => {
+    console.error("DATA LOADING FAILED:", error.message);
+    document.getElementById('learnerSelect').innerHTML = '<option disabled selected>Error loading data</option>';
+  });
 
-      // Normalize your JSON structure
-      detailedLearners = rawData.map(l => ({
-        learner: l.Learner,
-        subjects: {
-          EE: l.EE,
-          ME: l.ME,
-          AE: l.AE
-        }
-      }));
 
-      if (!detailedLearners.length) {
-        throw new Error("No learner data found");
-      }
+// --- POPULATE DROPDOWN (Fixes the Empty Dropdown Issue) ---
+function populateDropdown() {
+  const select = document.getElementById("learnerSelect");
+  select.innerHTML = ''; 
 
-      populateDropdown();
-      updateDashboard(detailedLearners[0]);
-      populateClassTable();
-    })
-    .catch(err => console.error("DATA ERROR:", err));
+  // Add default option
+  const defaultOption = document.createElement("option");
+  defaultOption.textContent = "Select Learner:";
+  defaultOption.value = "";
+  defaultOption.disabled = true;
+  defaultOption.selected = true;
+  select.appendChild(defaultOption);
 
-  /* =========================
-     DROPDOWN
-  ========================== */
-  function populateDropdown() {
-    const select = document.getElementById("learnerSelect");
-    select.innerHTML = "";
+  detailedLearners.forEach((l, i) => {
+    const option = document.createElement("option");
+    option.value = i; 
+    option.textContent = l.learner;
+    select.appendChild(option);
+  });
 
-    detailedLearners.forEach((l, i) => {
-      const option = document.createElement("option");
-      option.value = i;
-      option.textContent = l.learner;
-      select.appendChild(option);
+  select.addEventListener("change", e => {
+    const index = parseInt(e.target.value);
+    updateDashboard(detailedLearners[index]); 
+  });
+}
+
+// --- POPULATE CLASS RESULTS TABLE (Fixes Class Results Not Showing & Implements 72 Max Score) ---
+function populateClassTable(learners) {
+    const tbody = document.getElementById("classTable").querySelector("tbody");
+    tbody.innerHTML = '';
+
+    learners.forEach(l => {
+        const subjects = l.subjects;
+        const subjectScores = Object.values(subjects).map(gradeToNumber);
+        
+        // Calculate the total score
+        const totalScore = subjectScores.reduce((sum, score) => sum + score, 0);
+        
+        // Calculate the percentage based on Max 72
+        const percentage = ((totalScore / MAX_TOTAL_SCORE) * 100).toFixed(1); 
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${l.learner}</td>
+            <td>${subjectScores.length}</td>
+            <td>${totalScore} / ${MAX_TOTAL_SCORE}</td>
+            <td>${percentage}%</td>
+        `;
+        tbody.appendChild(tr);
     });
+}
 
-    select.addEventListener("change", e => {
-      updateDashboard(detailedLearners[e.target.value]);
-    });
-  }
 
-  /* =========================
-     DASHBOARD UPDATE
-  ========================== */
-  function updateDashboard(learner) {
-    const subjects = Object.keys(learner.subjects);
-    const values = subjects.map(s => gradeToNumber(learner.subjects[s]));
+// --- UPDATE LEARNER DASHBOARD ---
+function updateDashboard(learnerDetails) {
+  // Update Subject Performance Chart
+  const subjects = Object.keys(learnerDetails.subjects);
+  const values = subjects.map(s => gradeToNumber(learnerDetails.subjects[s]));
+  updateChart(subjects, values);
+  
+  // Update Performance Summary List
+  updateSummary(learnerDetails.subjects);
+}
 
-    updateChart(subjects, values);
-    updateSummary(learner.subjects);
-  }
+// --- UPDATE CHART (Fixes Charts Seeming Infinite) ---
+function updateChart(labels, data) {
+  if (chart) chart.destroy();
 
-  /* =========================
-     GRADE HANDLER
-  ========================== */
-  function gradeToNumber(value) {
-    if (typeof value === "number") return value;
-
-    return {
-      EE1: 5,
-      EE2: 4.5,
-      ME1: 4,
-      ME2: 3.5,
-      AE1: 3
-    }[value] || 0;
-  }
-
-  /* =========================
-     CHART (FIXED SCALING)
-  ========================== */
-  function updateChart(labels, data) {
-    if (chart) chart.destroy();
-
-    const ctx = document
-      .getElementById("subjectChart")
-      .getContext("2d");
-
-    chart = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [{
-          label: "Performance Score",
-          data,
-          borderWidth: 1
-        }]
+  chart = new Chart(document.getElementById("subjectChart"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "Performance Score (Max 8 points)", // Updated chart label
+        data,
+        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false, 
+      scales: {
+        y: { beginAtZero: true, max: 8 } // Chart Y-axis max updated to 8
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: false,
-        scales: {
-          y: {
-            beginAtZero: true,
-            max: 6,
-            ticks: {
-              stepSize: 1
-            }
+      plugins: {
+          legend: {
+              display: true // Show the legend since we updated the label
           }
-        }
       }
-    });
-  }
+    }
+  });
+}
 
-  /* =========================
-     SUMMARY LIST
-  ========================== */
-  function updateSummary(subjects) {
-    const ul = document.getElementById("summary");
-    ul.innerHTML = "";
+// --- UPDATE SUMMARY LIST ---
+function updateSummary(subjects) {
+  const ul = document.getElementById("summary");
+  ul.innerHTML = "";
+  
+  // Also calculate the total score and percentage for the individual learner display
+  const subjectScores = Object.values(subjects).map(gradeToNumber);
+  const totalScore = subjectScores.reduce((sum, score) => sum + score, 0);
+  const percentage = ((totalScore / MAX_TOTAL_SCORE) * 100).toFixed(1); 
+  
+  // Display the total score and percentage at the top of the summary list
+  const totalLi = document.createElement("li");
+  totalLi.innerHTML = `<strong>Total Score:</strong> ${totalScore} / ${MAX_TOTAL_SCORE}`;
+  ul.appendChild(totalLi);
+  
+  const percentLi = document.createElement("li");
+  percentLi.innerHTML = `<strong>Overall Percent:</strong> ${percentage}%`;
+  ul.appendChild(percentLi);
+  
+  // Add a divider
+  const divider = document.createElement("li");
+  divider.style.borderTop = '1px solid #ccc';
+  divider.style.marginTop = '5px';
+  divider.style.paddingTop = '5px';
+  ul.appendChild(divider);
 
-    Object.entries(subjects).forEach(([sub, val]) => {
-      const li = document.createElement("li");
-      li.textContent = `${sub}: ${val}`;
-      ul.appendChild(li);
-    });
-  }
+  // List individual subject grades
+  Object.entries(subjects).forEach(([sub, grade]) => {
+    const score = gradeToNumber(grade);
+    const li = document.createElement("li");
+    li.textContent = `${sub}: ${grade} (Score: ${score})`; // Display both grade and score
+    ul.appendChild(li);
+  });
+}
 
-  /* =========================
-     EXPORT LEARNER PDF
-  ========================== */
-  document
-    .getElementById("exportBtn")
-    .addEventListener("click", exportLearnerPDF);
 
-  function exportLearnerPDF() {
-    const report = document.getElementById("report");
-    const idx = document.getElementById("learnerSelect").value;
-    const learnerName = detailedLearners[idx]?.learner || "CBC_Report";
+// --- EXPORT PDF LOGIC ---
 
-    html2canvas(report, { scale: 2 }).then(canvas => {
+// Helper function to get current learner name
+function getCurrentLearnerName() {
+    const select = document.getElementById("learnerSelect");
+    const index = select.value;
+    return index !== "" && detailedLearners[index] ? detailedLearners[index].learner : "Overall_Report";
+}
+
+document.getElementById("exportBtn").addEventListener("click", exportPDF);
+
+function exportPDF() {
+  const report = document.getElementById("report");
+  const currentLearnerName = getCurrentLearnerName();
+
+  html2canvas(report, { scale: 2 }).then(canvas => {
+    const imgData = canvas.toDataURL("image/png");
+    const { jsPDF } = window.jspdf;
+
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    const padding = 10;
+    const textHeight = 10;
+    
+    pdf.setFontSize(16);
+    pdf.text(`Learner: ${currentLearnerName}`, padding, textHeight);
+
+    pdf.addImage(imgData, "PNG", 0, textHeight + 5, pdfWidth, pdfHeight); 
+    pdf.save(`${currentLearnerName}_CBC_Report.pdf`);
+  });
+}
+
+// --- EXPORT CLASS PDF LOGIC ---
+
+const exportClassBtn = document.getElementById("exportClassBtn");
+
+if (exportClassBtn) {
+  exportClassBtn.addEventListener("click", () => {
+    const tableWrapper = document.querySelector(".table-wrapper");
+
+    html2canvas(tableWrapper, { scale: 2 }).then(canvas => {
       const imgData = canvas.toDataURL("image/png");
       const { jsPDF } = window.jspdf;
 
@@ -150,62 +232,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const height = (canvas.height * width) / canvas.width;
 
       pdf.setFontSize(16);
-      pdf.text(`Learner: ${learnerName}`, 10, 15);
+      pdf.text("CBC Class Results Summary", 10, 15);
       pdf.addImage(imgData, "PNG", 0, 20, width, height);
 
-      pdf.save(`${learnerName}_CBC_Report.pdf`);
+      pdf.save("CBC_Class_Results.pdf");
     });
-  }
+  });
+}
 
-  /* =========================
-     CLASS TABLE
-  ========================== */
-  function populateClassTable() {
-    const tbody = document.querySelector("#classTable tbody");
-    if (!tbody) return;
-
-    tbody.innerHTML = "";
-
-    detailedLearners.forEach(l => {
-      const grades = Object.values(l.subjects).map(gradeToNumber);
-      const avg = (
-        grades.reduce((a, b) => a + b, 0) / grades.length
-      ).toFixed(2);
-
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${l.learner}</td>
-        <td>${Object.keys(l.subjects).length}</td>
-        <td>${avg}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-
-  /* =========================
-     EXPORT CLASS PDF
-  ========================== */
-  const exportClassBtn = document.getElementById("exportClassBtn");
-
-  if (exportClassBtn) {
-    exportClassBtn.addEventListener("click", () => {
-      const tableWrapper = document.querySelector(".table-wrapper");
-
-      html2canvas(tableWrapper, { scale: 2 }).then(canvas => {
-        const imgData = canvas.toDataURL("image/png");
-        const { jsPDF } = window.jspdf;
-
-        const pdf = new jsPDF("p", "mm", "a4");
-        const width = pdf.internal.pageSize.getWidth();
-        const height = (canvas.height * width) / canvas.width;
-
-        pdf.setFontSize(16);
-        pdf.text("CBC Class Results Summary", 10, 15);
-        pdf.addImage(imgData, "PNG", 0, 20, width, height);
-
-        pdf.save("CBC_Class_Results.pdf");
-      });
-    });
-  }
-
-});
