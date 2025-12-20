@@ -195,7 +195,7 @@ function updateDashboard(learnerDetails) {
   updateChart(subjects, values);
   
   // Update Performance Summary List
-  updateSummary(learnerDetails.subjects);
+  updateSummary(learnerDetails.learner, learnerDetails.subjects);
 }
 
 // --- UPDATE CHART (Fixes Charts Seeming Infinite) ---
@@ -233,7 +233,7 @@ function updateChart(labels, data) {
 }
 
 // --- UPDATE SUMMARY LIST ---
-function updateSummary(subjects) {
+function updateSummary(learnerName, subjects) {
   const ul = document.getElementById("summary");
   ul.innerHTML = "";
   
@@ -258,13 +258,26 @@ function updateSummary(subjects) {
   divider.style.paddingTop = '5px';
   ul.appendChild(divider);
 
-  // List individual subject grades
-  Object.entries(subjects).forEach(([sub, grade]) => {
-    const score = gradeToNumber(grade);
-    const li = document.createElement("li");
-    li.textContent = `${sub}: ${grade} (Score: ${score})`; // Display both grade and score
-    ul.appendChild(li);
-  });
+  // Find the performance summary for this learner
+  const summary = summaryLearners.find(s => s.learner === learnerName);
+  if (summary) {
+    // Display grade counts
+    Object.entries(summary).forEach(([grade, count]) => {
+      if (grade !== 'learner') {
+        const li = document.createElement("li");
+        li.textContent = `${grade}: ${count}`;
+        ul.appendChild(li);
+      }
+    });
+  } else {
+    // Fallback to individual subject grades if summary not found
+    Object.entries(subjects).forEach(([sub, grade]) => {
+      const score = gradeToNumber(grade);
+      const li = document.createElement("li");
+      li.textContent = `${sub}: ${grade} (Score: ${score})`; // Display both grade and score
+      ul.appendChild(li);
+    });
+  }
 }
 
 
@@ -349,4 +362,4 @@ if (exportTallyBtn) {
       pdf.save("CBC_Subject_Tally.pdf");
     });
   });
-          }
+}
