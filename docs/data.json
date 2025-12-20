@@ -64,7 +64,7 @@
         "English": "ME2",
         "Kiswahili": "ME2",
         "Mathematics": "AE1",
-        "Integrated Science": "AE1",
+        "Integrated Science": "ME1",
         "Agriculture": "ME1",
         "Social Studies": "ME1",
         "CRE": "ME2",
@@ -90,39 +90,38 @@
   "performance_summary": [
     {
       "learner": "Aquillah Wanjiru Wangare",
-      "EE": 6,
-      "ME": 3,
-      "AE": 0
+      "ME1": 1,
+      "EE2": 5,
+      "EE1": 3
     },
     {
       "learner": "Kamau Joy Muthoni",
-      "EE": 5,
-      "ME": 4,
-      "AE": 0
+      "EE2": 6,
+      "EE1": 3,
     },
     {
       "learner": "Victoria Wanjiku Gaikia",
-      "EE": 2,
-      "ME": 6,
-      "AE": 1
+      "ME2": 3,
+      "ME1": 3,
+      "EE2": 3
     },
     {
       "learner": "Tevin Wambugu",
-      "EE": 1,
-      "ME": 6,
-      "AE": 2
+      "ME2": 1,
+      "ME1": 4,
+      "EE2": 4
     },
     {
       "learner": "Miles Mwangi",
-      "EE": 0,
-      "ME": 5,
-      "AE": 4
+      "ME2": 5,
+      "ME1": 3,
+      "AE": 1
     },
     {
       "learner": "Finian Ancile Kamau",
-      "EE": 1,
-      "ME": 4,
-      "AE": 4
+      "ME2": 4,
+      "ME1": 2,
+      "AE": 3
     }
   ]
     }
